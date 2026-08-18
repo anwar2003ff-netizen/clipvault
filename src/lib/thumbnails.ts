@@ -1,3 +1,5 @@
+import { toPlayableSrc } from './fileHandling'
+
 const THUMB_WIDTH = 320 // keeps the DB small: ~10-25KB per thumbnail as base64 JPEG
 
 /**
@@ -13,7 +15,7 @@ export function generateThumbnail(
     video.crossOrigin = 'anonymous'
     video.muted = true
     video.preload = 'metadata'
-    video.src = uri
+    video.src = toPlayableSrc(uri)
 
     const cleanup = () => {
       video.src = ''

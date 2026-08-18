@@ -19,14 +19,23 @@ export default function HomeScreen({
   const projects = useProjects()
   const [query, setQuery] = useState('')
   const [importing, setImporting] = useState(false)
+  const [importMsg, setImportMsg] = useState<string | null>(null)
 
   const recent = (clips ?? []).slice(0, 6)
   const searchResults = query.trim() ? searchClips(clips ?? [], query) : []
 
   const handleAddClips = async () => {
     setImporting(true)
+    setImportMsg(null)
     try {
-      await importClips()
+      const results = await importClips()
+      const ok = results.filter((r) => r.ok).length
+      const failed = results.filter((r) => !r.ok)
+      if (results.length === 0) setImportMsg(null) // picker was cancelled, nothing to report
+      else if (failed.length === 0) setImportMsg(`Imported ${ok} clip${ok === 1 ? '' : 's'}.`)
+      else setImportMsg(`Imported ${ok}, ${failed.length} failed: ${failed[0].error ?? 'unknown error'}`)
+    } catch (err) {
+      setImportMsg(err instanceof Error ? err.message : 'Import failed. Please try again.')
     } finally {
       setImporting(false)
     }
@@ -59,6 +68,7 @@ export default function HomeScreen({
           >
             {importing ? 'Importing…' : '+ Add Clips'}
           </button>
+          {importMsg && <p className="mt-2 text-xs text-vault-teal">{importMsg}</p>}
 
           {newClips && newClips.length > 0 && (
             <button

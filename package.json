@@ -19,7 +19,8 @@
     "dexie": "^4.0.8",
     "dexie-react-hooks": "^1.1.7",
     "@capacitor/core": "^6.1.2",
-    "@capacitor/filesystem": "^6.0.1"
+    "@capacitor/filesystem": "^6.0.1",
+    "@capawesome/capacitor-file-picker": "^6.1.0"
   },
   "devDependencies": {
     "@capacitor/android": "^6.1.2",

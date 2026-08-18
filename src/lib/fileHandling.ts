@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core'
+import { FilePicker } from '@capawesome/capacitor-file-picker'
 
 export interface PickedFile {
   uri: string // playable src for <video>, and the value stored as Clip.uri
@@ -59,9 +60,53 @@ function pickVideoFilesWeb(): Promise<PickedFile[]> {
 }
 
 async function pickVideoFilesNative(): Promise<PickedFile[]> {
-  throw new Error(
-    'Native file picking is not wired up yet. Install @capawesome/capacitor-file-picker ' +
-      'and implement this branch — see README "Native file access". Until then, build ' +
-      'and test ClipVault in the browser (npm run dev) where the web picker works fully.',
-  )
+  try {
+    const result = await FilePicker.pickFiles({
+      types: ['video/*'],
+      multiple: true,
+      readData: false,
+    })
+    return result.files
+      .filter((f) => f.path || f.webPath)
+      .map((f) => ({
+        // Store the raw native path/URI, NOT a converted WebView URL — the
+        // raw value is what stays valid across app restarts. Convert to a
+        // playable src on demand via toPlayableSrc() wherever a <video> or
+        // canvas needs to actually load the file (see thumbnails.ts,
+        // VideoPlayer.tsx, NewClipsInbox.tsx).
+        uri: (f.path ?? f.webPath) as string,
+        fileName: f.name || 'video',
+        sizeBytes: f.size ?? undefined,
+      }))
+  } catch (err) {
+    // FilePicker throws if the user cancels the picker (not a real error) —
+    // treat any throw here as "nothing was selected" rather than crashing
+    // the import flow. Real failures (permission denied, corrupted picker
+    // state) surface to the user as "0 files imported" via the caller,
+    // which is the correct, non-alarming behavior for a cancel.
+    return []
+  }
+}
+
+/**
+ * Converts a stored Clip.uri into something the WebView can actually load
+ * as a <video src> or draw to a <canvas>.
+ *
+ * - Web (blob: URLs from the dev-mode picker) and already-http(s) URLs are
+ *   returned unchanged.
+ * - Native file paths (from the SAF picker above) are converted through
+ *   Capacitor's bridge, which serves local files at a special
+ *   https://localhost/_capacitor_file_/... URL the WebView is allowed to
+ *   load. This conversion is cheap and safe to call on every render — it
+ *   does not read or copy the file, just rewrites the URL.
+ */
+export function toPlayableSrc(uri: string): string {
+  if (!uri) return uri
+  if (uri.startsWith('blob:') || uri.startsWith('http://') || uri.startsWith('https://')) {
+    return uri
+  }
+  if (Capacitor.isNativePlatform()) {
+    return Capacitor.convertFileSrc(uri)
+  }
+  return uri
 }

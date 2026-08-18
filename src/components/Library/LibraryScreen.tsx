@@ -14,6 +14,7 @@ export default function LibraryScreen({ onOpenClip }: { onOpenClip: (id: string)
   const [selectionMode, setSelectionMode] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [importing, setImporting] = useState(false)
+  const [importMsg, setImportMsg] = useState<string | null>(null)
 
   const visible = useMemo(() => {
     const base = clips ?? []
@@ -40,8 +41,16 @@ export default function LibraryScreen({ onOpenClip }: { onOpenClip: (id: string)
 
   const handleAddClips = async () => {
     setImporting(true)
+    setImportMsg(null)
     try {
-      await importClips()
+      const results = await importClips()
+      const ok = results.filter((r) => r.ok).length
+      const failed = results.filter((r) => !r.ok)
+      if (results.length === 0) setImportMsg(null)
+      else if (failed.length === 0) setImportMsg(`Imported ${ok} clip${ok === 1 ? '' : 's'}.`)
+      else setImportMsg(`Imported ${ok}, ${failed.length} failed: ${failed[0].error ?? 'unknown error'}`)
+    } catch (err) {
+      setImportMsg(err instanceof Error ? err.message : 'Import failed. Please try again.')
     } finally {
       setImporting(false)
     }
@@ -86,13 +95,16 @@ export default function LibraryScreen({ onOpenClip }: { onOpenClip: (id: string)
           title="Your library is empty"
           subtitle="Import videos from your device to get started."
           action={
-            <button
-              onClick={handleAddClips}
-              disabled={importing}
-              className="rounded-card bg-vault-gold px-5 py-2.5 text-sm font-semibold text-vault-bg active:opacity-80 disabled:opacity-50"
-            >
-              {importing ? 'Importing…' : '+ Add Clips'}
-            </button>
+            <div className="flex flex-col items-center gap-2">
+              <button
+                onClick={handleAddClips}
+                disabled={importing}
+                className="rounded-card bg-vault-gold px-5 py-2.5 text-sm font-semibold text-vault-bg active:opacity-80 disabled:opacity-50"
+              >
+                {importing ? 'Importing…' : '+ Add Clips'}
+              </button>
+              {importMsg && <p className="text-xs text-vault-teal">{importMsg}</p>}
+            </div>
           }
         />
       ) : visible.length === 0 ? (

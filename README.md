@@ -62,19 +62,10 @@ src/utils/export.ts      project JSON export + full metadata backup
 - ✅ **Phase 4** — Projects, #N → #1 ranking, project management
 - ✅ **Phase 5** — JSON export, metadata backup/import
 - 🔶 **Phase 6 (partial)** — Error handling for missing/corrupt files is in place
-  (see `fileMissing` on `Clip`, error state in `VideoPlayer`). Two things are
-  intentionally left as follow-ups rather than guessed at:
-  1. **Native file picking with persistent URIs.** Today, `pickVideoFiles()`
-     (`src/lib/fileHandling.ts`) uses the browser's `<input type="file">` when
-     running in a normal browser — this is what you'll use for `npm run dev`
-     testing today, and it fully works, but the `blob:` URI it returns does
-     **not** survive an app restart. For the installed Android app, wire the
-     native branch to a Storage Access Framework picker with a *persistable*
-     URI permission (recommended: `@capawesome/capacitor-file-picker`, MIT
-     license). That's a single function to fill in — everything else in the
-     app (DB schema, UI, search, projects) already expects a stable `uri`
-     string and needs no changes.
-  2. **Virtualized grid for very large libraries.** The Library grid renders
+  (see `fileMissing` on `Clip`, error state in `VideoPlayer`), and native file
+  picking with persistent URIs is wired up (see section 5). Remaining
+  follow-up:
+  1. **Virtualized grid for very large libraries.** The Library grid renders
      with plain CSS grid + `loading="lazy"` images today, which comfortably
      handles hundreds of clips. If your library grows into the low
      thousands and scrolling gets janky, swap the grid in
@@ -121,19 +112,25 @@ To build a **release** (signed) APK instead of a debug one, you'll need a
 signing keystore stored as a GitHub Actions secret — ask me when you're
 ready for that and I'll add the signing step.
 
-## 5. Adding native (persistent) file access
+## 5. Native file access
 
-When you're ready to move past the dev-mode file picker:
+Implemented in `src/lib/fileHandling.ts` using `@capawesome/capacitor-file-picker`
+(SAF-based, MIT licensed). On a native Android build, tapping **+ Add Clips**
+opens the system file picker; the returned native path is stored as
+`Clip.uri` and converted on demand to a WebView-loadable URL via
+`toPlayableSrc()` (used everywhere a clip is actually played or
+thumbnailed — the video player, the New Clips inbox preview, and thumbnail
+generation). Nothing else in the app needed to change since `Clip.uri` was
+always treated as an opaque reference.
 
-```bash
-npm install @capawesome/capacitor-file-picker
-npx cap sync android
-```
+If you add or change native plugins like this one, remember to run
+`npx cap sync android` (the GitHub Actions workflow already does this on
+every build) so the native project picks up the new dependency.
 
-Then implement `pickVideoFilesNative()` in `src/lib/fileHandling.ts` using
-that plugin's `pickFiles({ types: ['video/*'], multiple: true })`, requesting
-persistable read permission on the returned URIs. The rest of the app needs
-no changes — `Clip.uri` already just expects a stable, playable URI.
+**If Add Clips ever appears to do nothing again:** the button now always
+shows a status line — "Imported N clips," a per-file error, or nothing if
+you simply cancelled the picker — instead of failing silently. If you see
+an error message there, send it over and it's a quick fix.
 
 ## 6. Dependency list
 

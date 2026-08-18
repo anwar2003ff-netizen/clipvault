@@ -1,10 +1,12 @@
 import { useRef, useState } from 'react'
+import { toPlayableSrc } from '@/lib/fileHandling'
 
 export default function VideoPlayer({ uri, poster }: { uri: string; poster?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [playing, setPlaying] = useState(false)
   const [muted, setMuted] = useState(true)
   const [error, setError] = useState(false)
+  const src = toPlayableSrc(uri)
 
   const togglePlay = () => {
     const v = videoRef.current
@@ -45,7 +47,7 @@ export default function VideoPlayer({ uri, poster }: { uri: string; poster?: str
     <div className="relative w-full overflow-hidden rounded-card bg-black">
       <video
         ref={videoRef}
-        src={uri}
+        src={src}
         poster={poster}
         muted={muted}
         playsInline

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Header from '@/components/Layout/Header'
 import { useNewClips, updateClipTags } from '@/hooks/useClips'
+import { toPlayableSrc } from '@/lib/fileHandling'
 
 const QUICK_TAGS = ['cat', 'dog', 'funny', 'fat', 'cute', 'weird', 'walking', 'sleeping']
 
@@ -58,7 +59,7 @@ export default function NewClipsInbox({ onDone }: { onDone: () => void }) {
       />
       <div className="px-4 pt-3">
         <video
-          src={clip.uri}
+          src={toPlayableSrc(clip.uri)}
           poster={clip.thumbnailDataUrl}
           controls
           muted

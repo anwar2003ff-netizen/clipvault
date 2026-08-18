@@ -19,7 +19,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          # No `cache: npm` here — that requires a package-lock.json committed
+          # to the repo. If you later commit one (from running `npm install`
+          # locally), you can add `cache: npm` back for faster builds.
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -28,7 +30,9 @@ jobs:
           java-version: '17'
 
       - name: Install dependencies
-        run: npm ci
+        # `npm ci` also requires a committed package-lock.json — using
+        # `npm install` instead since this repo doesn't commit one.
+        run: npm install
 
       - name: Build web app
         run: npm run build

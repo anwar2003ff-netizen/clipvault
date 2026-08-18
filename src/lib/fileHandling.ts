@@ -63,18 +63,18 @@ async function pickVideoFilesNative(): Promise<PickedFile[]> {
   try {
     const result = await FilePicker.pickFiles({
       types: ['video/*'],
-      multiple: true,
+      limit: 0, // 0 = no limit, allows multi-select
       readData: false,
     })
     return result.files
-      .filter((f) => f.path || f.webPath)
+      .filter((f) => !!f.path)
       .map((f) => ({
-        // Store the raw native path/URI, NOT a converted WebView URL — the
+        // Store the raw native path, NOT a converted WebView URL — the
         // raw value is what stays valid across app restarts. Convert to a
         // playable src on demand via toPlayableSrc() wherever a <video> or
         // canvas needs to actually load the file (see thumbnails.ts,
         // VideoPlayer.tsx, NewClipsInbox.tsx).
-        uri: (f.path ?? f.webPath) as string,
+        uri: f.path as string,
         fileName: f.name || 'video',
         sizeBytes: f.size ?? undefined,
       }))

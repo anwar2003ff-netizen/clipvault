@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  overscroll-behavior-y: contain;
+}
+
+body {
+  font-family: 'DM Mono', ui-monospace, monospace;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+/* Respect Android gesture-nav / notch insets so the bottom nav and header never get clipped. */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
